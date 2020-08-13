@@ -34,6 +34,7 @@ import (
 	"github.com/rancher/k3d/v3/cmd/image"
 	"github.com/rancher/k3d/v3/cmd/kubeconfig"
 	"github.com/rancher/k3d/v3/cmd/node"
+	"github.com/rancher/k3d/v3/cmd/registry"
 	"github.com/rancher/k3d/v3/pkg/runtimes"
 	"github.com/rancher/k3d/v3/version"
 
@@ -94,6 +95,7 @@ func init() {
 	rootCmd.AddCommand(kubeconfig.NewCmdKubeconfig())
 	rootCmd.AddCommand(node.NewCmdNode())
 	rootCmd.AddCommand(image.NewCmdImage())
+	rootCmd.AddCommand(registry.NewCmdRegistry())
 
 	rootCmd.AddCommand(&cobra.Command{
 		Use:   "version",
