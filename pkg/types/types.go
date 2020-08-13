@@ -97,6 +97,9 @@ const (
 	LabelServerAPIPort   string = "k3d.server.api.port"
 	LabelServerAPIHost   string = "k3d.server.api.host"
 	LabelServerAPIHostIP string = "k3d.server.api.hostIP"
+	LabelRegistryHost    string = "k3d.registry.host"
+	LabelRegistryHostIP  string = "k3d.registry.hostIP"
+	LabelRegistryPort    string = "k3s.registry.port"
 )
 
 // DefaultRoleCmds maps the node roles to their respective default commands
@@ -184,7 +187,7 @@ type Cluster struct {
 	InitNode           *Node              // init server node
 	ExternalDatastore  ExternalDatastore  `yaml:"external_datastore" json:"externalDatastore,omitempty"`
 	CreateClusterOpts  *ClusterCreateOpts `yaml:"options" json:"options,omitempty"`
-	ExposeAPI          ExposeAPI          `yaml:"expose_api" json:"exposeAPI,omitempty"`
+	ExposeAPI          ExposePort         `yaml:"expose_api" json:"exposeAPI,omitempty"`
 	ServerLoadBalancer *Node              `yaml:"server_loadbalancer" json:"serverLoadBalancer,omitempty"`
 	ImageVolume        string             `yaml:"image_volume" json:"imageVolume,omitempty"`
 }
@@ -240,8 +243,8 @@ type Node struct {
 
 // ServerOpts describes some additional server role specific opts
 type ServerOpts struct {
-	IsInit    bool      `yaml:"is_initializing_server" json:"isInitializingServer,omitempty"`
-	ExposeAPI ExposeAPI // filled automatically
+	IsInit    bool       `yaml:"is_initializing_server" json:"isInitializingServer,omitempty"`
+	ExposeAPI ExposePort // filled automatically
 }
 
 // ExternalDatastore describes an external datastore used for HA/multi-server clusters
@@ -253,8 +256,8 @@ type ExternalDatastore struct {
 	Network  string `yaml:"network" json:"network,omitempty"`
 }
 
-// ExposeAPI describes specs needed to expose the API-Server
-type ExposeAPI struct {
+// ExposePort describes specs needed to expose the API-Server
+type ExposePort struct {
 	Host   string `yaml:"host" json:"host,omitempty"`
 	HostIP string `yaml:"host_ip" json:"hostIP,omitempty"`
 	Port   string `yaml:"port" json:"port"`
@@ -267,3 +270,16 @@ type AgentOpts struct{}
 func GetDefaultObjectName(name string) string {
 	return fmt.Sprintf("%s-%s", DefaultObjectNamePrefix, name)
 }
+
+/*
+ * Registry
+ */
+
+// Registry Defaults
+const (
+	DefaultRegistryPort       = "5000"
+	DefaultRegistryName       = DefaultObjectNamePrefix + "-registry"
+	DefaultRegistriesFilePath = "/etc/rancher/k3s/registries.yaml"
+	DefaultRegistryMountPath  = "/var/lib/registry"
+	DefaultDockerHubAddress   = "registry-1.docker.io"
+)
