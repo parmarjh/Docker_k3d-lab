@@ -319,6 +319,7 @@ func NodeGet(ctx context.Context, runtime runtimes.Runtime, node *k3d.Node) (*k3
 	node, err := runtime.GetNode(ctx, node)
 	if err != nil {
 		log.Errorf("Failed to get node '%s'", node.Name)
+		return nil, err
 	}
 
 	return node, nil
@@ -357,4 +358,15 @@ func NodeWaitForLogMessage(ctx context.Context, runtime runtimes.Runtime, node *
 	time.Sleep(500 * time.Millisecond) // wait for half a second to avoid overloading docker (error `socket: too many open files`)
 	log.Debugf("Finished waiting for log message '%s' from node '%s'", message, node.Name)
 	return nil
+}
+
+// NodeFilterByRole filters a list of nodes by their roles
+func NodeFilterByRole(nodes []*k3d.Node, role k3d.Role) []*k3d.Node {
+	resultList := []*k3d.Node{}
+	for _, node := range nodes {
+		if node.Role == role {
+			resultList = append(resultList, node)
+		}
+	}
+	return resultList
 }
