@@ -35,10 +35,25 @@ import (
 	"fmt"
 
 	log "github.com/sirupsen/logrus"
+
+	validator "github.com/go-playground/validator/v10"
 )
 
 // ValidateClusterConfig checks a given cluster config for basic errors
 func ValidateClusterConfig(ctx context.Context, runtime runtimes.Runtime, config conf.ClusterConfig) error {
+
+	validate := validator.New()
+
+	if err := validate.Struct(config.Cluster); err != nil {
+		if _, ok := err.(*validator.ValidationErrors); ok {
+			return err
+		}
+		for _, err := range err.(validator.ValidationErrors) {
+			log.Errorf("%+v", err)
+			return fmt.Errorf("Failed validation")
+		}
+	}
+
 	// cluster name must be a valid host name
 	if err := k3dc.CheckName(config.Cluster.Name); err != nil {
 		log.Errorf("Provided cluster name '%s' does not match requirements", config.Cluster.Name)

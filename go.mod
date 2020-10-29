@@ -14,6 +14,7 @@ require (
 	github.com/docker/docker v17.12.0-ce-rc1.0.20200528204242-89382f2f2074+incompatible
 	github.com/docker/go-connections v0.4.0
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
+	github.com/go-playground/validator/v10 v10.4.1
 	github.com/go-test/deep v1.0.4
 	github.com/gogo/googleapis v1.3.0 // indirect
 	github.com/golang/protobuf v1.4.2 // indirect

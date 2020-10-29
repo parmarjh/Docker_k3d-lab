@@ -173,7 +173,7 @@ type ClusterNetwork struct {
 
 // Cluster describes a k3d cluster
 type Cluster struct {
-	Name               string            `yaml:"name" json:"name,omitempty"`
+	Name               string            `yaml:"name" json:"name,omitempty" validate:"required,hostname_rfc1123,max=32"` // https://github.com/go-playground/validator#network
 	Network            ClusterNetwork    `yaml:"network" json:"network,omitempty"`
 	Token              string            `yaml:"clusterToken" json:"clusterToken,omitempty"`
 	Nodes              []*Node           `yaml:"nodes" json:"nodes,omitempty"`
