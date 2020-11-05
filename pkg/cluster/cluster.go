@@ -564,16 +564,21 @@ func generateNodeName(cluster string, role k3d.Role, suffix int) string {
 func ClusterStart(ctx context.Context, runtime k3drt.Runtime, cluster *k3d.Cluster, startClusterOpts types.ClusterStartOpts) error {
 	log.Infof("Starting cluster '%s'", cluster.Name)
 
-	start := time.Now()
+	start := time.Now() // used for checking container logs since this time
 
+	clusterStartCtx := ctx
+	clusterPrepCtx := ctx
 	if startClusterOpts.Timeout > 0*time.Second {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, startClusterOpts.Timeout)
-		defer cancel()
+		var cancelClusterStartCtx context.CancelFunc
+		var cancelClusterPrepCtx context.CancelFunc
+		clusterStartCtx, cancelClusterStartCtx = context.WithTimeout(clusterStartCtx, startClusterOpts.Timeout)
+		clusterPrepCtx, cancelClusterPrepCtx = context.WithTimeout(clusterStartCtx, startClusterOpts.Timeout)
+		defer cancelClusterStartCtx()
+		defer cancelClusterPrepCtx()
 	}
 
 	// vars to support waiting for server nodes to be ready
-	waitForServerWaitgroup, ctx := errgroup.WithContext(ctx)
+	waitForServerWaitgroup, clusterStartCtx := errgroup.WithContext(clusterStartCtx)
 
 	failed := 0
 	var serverlb *k3d.Node
@@ -589,7 +594,7 @@ func ClusterStart(ctx context.Context, runtime k3drt.Runtime, cluster *k3d.Clust
 		if !node.State.Running {
 
 			// start node
-			if err := runtime.StartNode(ctx, node); err != nil {
+			if err := runtime.StartNode(clusterStartCtx, node); err != nil {
 				log.Warningf("Failed to start node '%s': Try to start it manually", node.Name)
 				failed++
 				continue
@@ -602,7 +607,7 @@ func ClusterStart(ctx context.Context, runtime k3drt.Runtime, cluster *k3d.Clust
 					// TODO: avoid `level=fatal msg="starting kubernetes: preparing server: post join: a configuration change is already in progress (5)"`
 					// ... by scanning for this line in logs and restarting the container in case it appears
 					log.Debugf("Starting to wait for server node '%s'", serverNode.Name)
-					return NodeWaitForLogMessage(ctx, runtime, serverNode, k3d.ReadyLogMessageByRole[k3d.ServerRole], start)
+					return NodeWaitForLogMessage(clusterStartCtx, runtime, serverNode, k3d.ReadyLogMessageByRole[k3d.ServerRole], start)
 				})
 			}
 		} else {
@@ -614,7 +619,7 @@ func ClusterStart(ctx context.Context, runtime k3drt.Runtime, cluster *k3d.Clust
 	if serverlb != nil {
 		if !serverlb.State.Running {
 			log.Debugln("Starting serverlb...")
-			if err := runtime.StartNode(ctx, serverlb); err != nil { // FIXME: we could run into a nullpointer exception here
+			if err := runtime.StartNode(clusterStartCtx, serverlb); err != nil { // FIXME: we could run into a nullpointer exception here
 				log.Warningf("Failed to start serverlb '%s': Try to start it manually", serverlb.Name)
 				failed++
 			}
@@ -622,7 +627,7 @@ func ClusterStart(ctx context.Context, runtime k3drt.Runtime, cluster *k3d.Clust
 				// TODO: avoid `level=fatal msg="starting kubernetes: preparing server: post join: a configuration change is already in progress (5)"`
 				// ... by scanning for this line in logs and restarting the container in case it appears
 				log.Debugf("Starting to wait for loadbalancer node '%s'", serverlb.Name)
-				return NodeWaitForLogMessage(ctx, runtime, serverlb, k3d.ReadyLogMessageByRole[k3d.LoadBalancerRole], start)
+				return NodeWaitForLogMessage(clusterStartCtx, runtime, serverlb, k3d.ReadyLogMessageByRole[k3d.LoadBalancerRole], start)
 			})
 		} else {
 			log.Infof("Serverlb '%s' already running", serverlb.Name)
@@ -648,7 +653,7 @@ func ClusterStart(ctx context.Context, runtime k3drt.Runtime, cluster *k3d.Clust
 	 */
 
 	// add /etc/hosts and CoreDNS entry for host.k3d.internal, referring to the host system
-	if !cluster.CreateClusterOpts.PrepDisableHostIPInjection {
+	if !startClusterOpts.PrepDisableHostIPInjection {
 		prepInjectHostIP(clusterPrepCtx, runtime, cluster)
 	}
 

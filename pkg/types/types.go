@@ -145,8 +145,9 @@ type ClusterCreateOpts struct {
 
 // ClusterStartOpts describe a set of options one can set when (re-)starting a cluster
 type ClusterStartOpts struct {
-	WaitForServer bool
-	Timeout       time.Duration
+	PrepDisableHostIPInjection bool
+	WaitForServer              bool
+	Timeout                    time.Duration
 }
 
 // NodeCreateOpts describes a set of options one can set when creating a new node

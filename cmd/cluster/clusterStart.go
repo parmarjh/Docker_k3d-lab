@@ -64,6 +64,7 @@ func NewCmdClusterStart() *cobra.Command {
 	cmd.Flags().BoolP("all", "a", false, "Start all existing clusters")
 	cmd.Flags().BoolVar(&startClusterOpts.WaitForServer, "wait", false, "Wait for the server(s) (and loadbalancer) to be ready before returning.")
 	cmd.Flags().DurationVar(&startClusterOpts.Timeout, "timeout", 0*time.Second, "Maximum waiting time for '--wait' before canceling/returning.")
+	cmd.Flags().BoolVar(&startClusterOpts.PrepDisableHostIPInjection, "no-hostip", false, "Disable the automatic injection of the Host IP as 'host.k3d.internal' into the containers and CoreDNS")
 
 	// add subcommands
 
