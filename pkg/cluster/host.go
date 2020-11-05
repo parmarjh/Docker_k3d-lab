@@ -30,6 +30,7 @@ import (
 	"runtime"
 
 	rt "github.com/rancher/k3d/v3/pkg/runtimes"
+	rtdocker "github.com/rancher/k3d/v3/pkg/runtimes/docker"
 	k3d "github.com/rancher/k3d/v3/pkg/types"
 	"github.com/rancher/k3d/v3/pkg/util"
 	log "github.com/sirupsen/logrus"
@@ -57,7 +58,7 @@ func GetHostIP(ctx context.Context, rtime rt.Runtime, cluster *k3d.Cluster) (net
 
 		// Docker (for Desktop) on MacOS or Windows
 		if runtime.GOOS == "windows" || runtime.GOOS == "darwin" {
-			ip, err := resolveHostnameFromInside(ctx, rtime, cluster.Nodes[0], "host.docker.internal")
+			ip, err := resolveHostnameFromInside(ctx, rtime, cluster.Nodes[0], rtdocker.DOCKER_INTERNAL_HOSTNAME)
 			if err != nil {
 				return nil, err
 			}

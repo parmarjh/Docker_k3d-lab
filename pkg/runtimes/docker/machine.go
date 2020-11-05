@@ -34,7 +34,6 @@ import (
 
 func (d Docker) GetDockerMachineIP() (string, error) {
 	machine := os.ExpandEnv("$DOCKER_MACHINE_NAME")
-	dockerHostName := "host.docker.internal"
 
 	// Option 1: use the docker-machine executable
 	if machine != "" {
@@ -59,16 +58,16 @@ func (d Docker) GetDockerMachineIP() (string, error) {
 	}
 
 	// Option 2: Try to lookup "host.docker.internal"
-	log.Debugf("Docker Machine not found, trying to lookup '%s' instead...", dockerHostName)
-	addrs, err := net.LookupHost(dockerHostName)
+	log.Debugf("Docker Machine not found, trying to lookup '%s' instead...", DOCKER_INTERNAL_HOSTNAME)
+	addrs, err := net.LookupHost(DOCKER_INTERNAL_HOSTNAME)
 	if err != nil {
-		log.Debugf("Lookup of Host %s failed: %+v", dockerHostName, err)
+		log.Debugf("Lookup of Host %s failed: %+v", DOCKER_INTERNAL_HOSTNAME, err)
 		return "", fmt.Errorf("Failed to get IP of Docker VM")
 	}
 	if len(addrs) == 0 {
-		log.Debugf("Lookup of Host %s didn't return any addresses", dockerHostName)
+		log.Debugf("Lookup of Host %s didn't return any addresses", DOCKER_INTERNAL_HOSTNAME)
 		return "", fmt.Errorf("Failed to get IP of Docker VM")
 	}
-	log.Debugf("Addresses returned for %s: %+v", dockerHostName, addrs)
+	log.Debugf("Addresses returned for %s: %+v", DOCKER_INTERNAL_HOSTNAME, addrs)
 	return addrs[0], nil
 }

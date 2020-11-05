@@ -32,3 +32,5 @@ type NodeInDocker struct {
 	HostConfig       container.HostConfig
 	NetworkingConfig network.NetworkingConfig
 }
+
+const DOCKER_INTERNAL_HOSTNAME = "host.docker.internal"
