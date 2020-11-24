@@ -138,7 +138,7 @@ func NewCmdClusterCreate() *cobra.Command {
 	cmd.Flags().BoolVar(&createClusterOpts.PrepDisableHostIPInjection, "no-hostip", false, "Disable the automatic injection of the Host IP as 'host.k3d.internal' into the containers and CoreDNS")
 	cmd.Flags().StringVar(&createClusterOpts.GPURequest, "gpus", "", "GPU devices to add to the cluster node containers ('all' to pass all GPUs) [From docker]")
 	cmd.Flags().StringArrayP("env", "e", nil, "Add environment variables to nodes (Format: `KEY[=VALUE][@NODEFILTER[;NODEFILTER...]]`\n - Example: `k3d cluster create --agents 2 -e \"HTTP_PROXY=my.proxy.com\" -e \"SOME_KEY=SOME_VAL@server[0]\"`")
-
+	cmd.Flags().BoolVar(&createClusterOpts.EnableDNSMagic, "enable-dns-magic", false, "Enable DNS Magic")
 	/* Image Importing */
 	cmd.Flags().BoolVar(&createClusterOpts.DisableImageVolume, "no-image-volume", false, "Disable the creation of a volume for importing images")
 

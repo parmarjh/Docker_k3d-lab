@@ -144,6 +144,7 @@ type ClusterCreateOpts struct {
 	K3sServerArgs              []string
 	K3sAgentArgs               []string
 	GPURequest                 string
+	EnableDNSMagic             bool
 }
 
 // ClusterStartOpts describe a set of options one can set when (re-)starting a cluster

@@ -383,6 +383,12 @@ func ClusterCreate(ctx context.Context, runtime k3drt.Runtime, cluster *k3d.Clus
 		prepInjectHostIP(clusterPrepCtx, runtime, cluster)
 	}
 
+	if cluster.CreateClusterOpts.EnableDNSMagic {
+		if err := prepEnableDNSMagic(clusterPrepCtx, runtime, cluster); err != nil {
+			log.Warnf("Failed to enable DNS Magic: %w", err)
+		}
+	}
+
 	return nil
 }
 
@@ -705,4 +711,52 @@ func prepInjectHostIP(ctx context.Context, runtime k3drt.Runtime, cluster *k3d.C
 		}
 
 	}
+}
+
+func prepEnableDNSMagic(ctx context.Context, runtime k3drt.Runtime, cluster *k3d.Cluster) error {
+	log.Infoln("Enabling DNS Magic...")
+	hostIP, err := GetHostIP(ctx, runtime, cluster)
+	if err != nil {
+		return fmt.Errorf("Failed to get HostIP: %+v", err)
+	}
+
+	if hostIP == nil {
+		return fmt.Errorf("No host IP found.. cannot enable DNS Magic")
+	}
+
+	// Build commands
+	dockerDNSIP := "127.0.0.11"
+	sr := map[string]string{
+		fmt.Sprintf("-d %s", dockerDNSIP):   fmt.Sprintf("-d %s", hostIP),
+		`-A OUTPUT \(.*\) -j DOCKER_OUTPUT`: `\0\n-A PREROUTING \1 -j DOCKER_OUTPUT`,
+		`--to-source :53`:                   fmt.Sprintf("--to-source %s:53", hostIP),
+	}
+
+	sedCmd := "sed"
+	for k, v := range sr {
+		sedCmd += fmt.Sprintf(` -e 's/%s/%s/g'`, k, v)
+	}
+
+	iptablesManipulationCmd := fmt.Sprintf(`iptables-save | %s | iptables-restore`, sedCmd)
+	resolvConfManipulationCmd := fmt.Sprintf("cp /etc/resolv.conf /etc/resolv.conf.original && sed -e 's/%s/%s/g' /etc/resolv.conf.original >/etc/resolv.conf", dockerDNSIP, hostIP)
+
+	// Execute commands in every node
+	failureCount := 0
+
+	for _, node := range cluster.Nodes {
+		if node.Role != k3d.ServerRole && node.Role != k3d.AgentRole {
+			continue
+		}
+		if err := runtime.ExecInNode(ctx, node, []string{"sh", "-c", fmt.Sprintf("%s && %s", iptablesManipulationCmd, resolvConfManipulationCmd)}); err != nil {
+			log.Warnf("Failed to apply DNS Magic to node '%s': %+v", node.Name, err)
+			failureCount++
+			continue
+		}
+	}
+	if failureCount < len(cluster.Nodes) {
+		log.Infof("Successfully applied DNS Magic to %d/%d nodes", (len(cluster.Nodes) - failureCount), len(cluster.Nodes))
+	}
+
+	return nil
+
 }
