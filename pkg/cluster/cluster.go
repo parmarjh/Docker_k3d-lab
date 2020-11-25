@@ -713,6 +713,7 @@ func prepInjectHostIP(ctx context.Context, runtime k3drt.Runtime, cluster *k3d.C
 	}
 }
 
+// inspired by https://github.com/kubernetes-sigs/kind/blob/c13c54b9564aed8bc4f28b90af20a1100da66963/images/base/files/usr/local/bin/entrypoint#L177-L200
 func prepEnableDNSMagic(ctx context.Context, runtime k3drt.Runtime, cluster *k3d.Cluster) error {
 	log.Infoln("Enabling DNS Magic...")
 	hostIP, err := GetHostIP(ctx, runtime, cluster)
