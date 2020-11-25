@@ -30,6 +30,7 @@ import (
 	"runtime"
 
 	rt "github.com/rancher/k3d/v3/pkg/runtimes"
+	"github.com/rancher/k3d/v3/pkg/runtimes/docker"
 	k3d "github.com/rancher/k3d/v3/pkg/types"
 	"github.com/rancher/k3d/v3/pkg/util"
 	log "github.com/sirupsen/logrus"
@@ -57,6 +58,14 @@ func GetHostIP(ctx context.Context, rtime rt.Runtime, cluster *k3d.Cluster) (net
 
 		// Docker (for Desktop) on MacOS or Windows
 		if runtime.GOOS == "windows" || runtime.GOOS == "darwin" {
+
+			// case 1: docker-machine (docker toolbox)
+			dockerMachineIP, err := rtime.(docker.Docker).GetDockerMachineIP()
+			if err != nil || dockerMachineIP == "" {
+				log.Tracef("GetHostIP (win/darwin): not using docker-machine or failed to check( err: %+v)", err)
+			}
+
+			// case 2: host.docker.internal (docker for desktop)
 			ip, err := resolveHostnameFromInside(ctx, rtime, cluster.Nodes[0], "host.docker.internal")
 			if err != nil {
 				return nil, err

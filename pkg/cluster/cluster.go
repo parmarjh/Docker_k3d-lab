@@ -385,7 +385,7 @@ func ClusterCreate(ctx context.Context, runtime k3drt.Runtime, cluster *k3d.Clus
 
 	if cluster.CreateClusterOpts.EnableDNSMagic {
 		if err := prepEnableDNSMagic(clusterPrepCtx, runtime, cluster); err != nil {
-			log.Warnf("Failed to enable DNS Magic: %w", err)
+			log.Warnf("Failed to enable DNS Magic: %+v", err)
 		}
 	}
 
