@@ -64,6 +64,9 @@ func GetHostIP(ctx context.Context, rtime rt.Runtime, cluster *k3d.Cluster) (net
 			if err != nil || dockerMachineIP == "" {
 				log.Tracef("GetHostIP (win/darwin): not using docker-machine or failed to check( err: %+v)", err)
 			}
+			if dockerMachineIP != "" {
+				return net.ParseIP(dockerMachineIP), nil
+			}
 
 			// case 2: host.docker.internal (docker for desktop)
 			ip, err := resolveHostnameFromInside(ctx, rtime, cluster.Nodes[0], "host.docker.internal")
