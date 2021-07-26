@@ -27,7 +27,7 @@ github.com/Microsoft/hcsshim/osversion
 # github.com/containerd/cgroups v0.0.0-20200824123100-0b889c03f102
 ## explicit
 github.com/containerd/cgroups/stats/v1
-# github.com/containerd/containerd v1.4.1
+# github.com/containerd/containerd v1.4.8
 ## explicit
 github.com/containerd/containerd
 github.com/containerd/containerd/api/services/containers/v1
