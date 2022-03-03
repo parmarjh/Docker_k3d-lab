@@ -6,7 +6,7 @@ require (
 	github.com/Microsoft/hcsshim v0.8.9 // indirect
 	github.com/Microsoft/hcsshim/test v0.0.0-20201030212021-6e6b6ce98037 // indirect
 	github.com/containerd/cgroups v0.0.0-20200824123100-0b889c03f102 // indirect
-	github.com/containerd/containerd v1.4.1
+	github.com/containerd/containerd v1.4.13
 	github.com/containerd/continuity v0.0.0-20190827140505-75bee3e2ccb6 // indirect
 	github.com/containerd/fifo v0.0.0-20190816180239-bda0ff6ed73c // indirect
 	github.com/containerd/ttrpc v0.0.0-20190828172938-92c8520ef9f8 // indirect
