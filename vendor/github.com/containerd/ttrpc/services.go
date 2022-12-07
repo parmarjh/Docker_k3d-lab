@@ -18,12 +18,14 @@ package ttrpc
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"io"
 	"os"
 	"path"
+	"unsafe"
 
 	"github.com/gogo/protobuf/proto"
-	"github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -50,7 +52,7 @@ func newServiceSet(interceptor UnaryServerInterceptor) *serviceSet {
 
 func (s *serviceSet) register(name string, methods map[string]Method) {
 	if _, ok := s.services[name]; ok {
-		panic(errors.Errorf("duplicate service %v registered", name))
+		panic(fmt.Errorf("duplicate service %v registered", name))
 	}
 
 	s.services[name] = ServiceDesc{
@@ -95,6 +97,10 @@ func (s *serviceSet) dispatch(ctx context.Context, serviceName, methodName strin
 		return nil, err
 	}
 
+	if isNil(resp) {
+		return nil, errors.New("ttrpc: marshal called with nil")
+	}
+
 	switch v := resp.(type) {
 	case proto.Message:
 		r, err := proto.Marshal(v)
@@ -111,12 +117,12 @@ func (s *serviceSet) dispatch(ctx context.Context, serviceName, methodName strin
 func (s *serviceSet) resolve(service, method string) (Method, error) {
 	srv, ok := s.services[service]
 	if !ok {
-		return nil, status.Errorf(codes.NotFound, "service %v", service)
+		return nil, status.Errorf(codes.Unimplemented, "service %v", service)
 	}
 
 	mthd, ok := srv.Methods[method]
 	if !ok {
-		return nil, status.Errorf(codes.NotFound, "method %v", method)
+		return nil, status.Errorf(codes.Unimplemented, "method %v", method)
 	}
 
 	return mthd, nil
@@ -153,4 +159,8 @@ func convertCode(err error) codes.Code {
 
 func fullPath(service, method string) string {
 	return "/" + path.Join(service, method)
+}
+
+func isNil(resp interface{}) bool {
+	return (*[2]uintptr)(unsafe.Pointer(&resp))[1] == 0
 }

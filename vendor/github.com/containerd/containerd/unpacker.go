@@ -31,6 +31,7 @@ import (
 	"github.com/containerd/containerd/images"
 	"github.com/containerd/containerd/log"
 	"github.com/containerd/containerd/mount"
+	"github.com/containerd/containerd/platforms"
 	"github.com/containerd/containerd/snapshots"
 	"github.com/opencontainers/go-digest"
 	"github.com/opencontainers/image-spec/identity"
@@ -64,11 +65,16 @@ func (c *Client) newUnpacker(ctx context.Context, rCtx *RemoteContext) (*unpacke
 			return nil, err
 		}
 	}
+	var limiter *semaphore.Weighted
+	if rCtx.MaxConcurrentDownloads > 0 {
+		limiter = semaphore.NewWeighted(int64(rCtx.MaxConcurrentDownloads))
+	}
 	return &unpacker{
 		updateCh:    make(chan ocispec.Descriptor, 128),
 		snapshotter: snapshotter,
 		config:      config,
 		c:           c,
+		limiter:     limiter,
 	}, nil
 }
 
@@ -91,6 +97,17 @@ func (u *unpacker) unpack(
 	diffIDs := i.RootFS.DiffIDs
 	if len(layers) != len(diffIDs) {
 		return errors.Errorf("number of layers and diffIDs don't match: %d != %d", len(layers), len(diffIDs))
+	}
+
+	if u.config.CheckPlatformSupported {
+		imgPlatform := platforms.Normalize(ocispec.Platform{OS: i.OS, Architecture: i.Architecture})
+		snapshotterPlatformMatcher, err := u.c.GetSnapshotterSupportedPlatforms(ctx, u.snapshotter)
+		if err != nil {
+			return errors.Wrapf(err, "failed to find supported platforms for snapshotter %s", u.snapshotter)
+		}
+		if !snapshotterPlatformMatcher.Match(imgPlatform) {
+			return fmt.Errorf("snapshotter %s does not support platform %s for image %s", u.snapshotter, imgPlatform, config.Digest)
+		}
 	}
 
 	var (
@@ -138,7 +155,7 @@ EachLayer:
 
 		for try := 1; try <= 3; try++ {
 			// Prepare snapshot with from parent, label as root
-			key = fmt.Sprintf("extract-%s %s", uniquePart(), chainID)
+			key = fmt.Sprintf(snapshots.UnpackKeyFormat, uniquePart(), chainID)
 			mounts, err = sn.Prepare(ctx, key, parent.String(), opts...)
 			if err != nil {
 				if errdefs.IsAlreadyExists(err) {
